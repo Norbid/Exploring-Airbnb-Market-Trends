@@ -1,0 +1,26 @@
+library(readr)
+library(readxl)
+library(stringr)
+library(lubridate)
+library(dplyr)
+
+data1 <- read.csv2("data/airbnb_price.csv", sep = ",")
+data2 <- read_excel("data/airbnb_room_type.xlsx")
+data3 <- read.delim("data/airbnb_last_review.tsv")
+
+#What are the dates of the earliest and most recent reviews?
+data3$last_review <- parse_date_time(data3$last_review, orders = '"%B %d %Y')
+first_reviewedd <- data3 %>% arrange(last_review) %>% head(n = 1)
+first_reviewed <- first_reviewedd$last_review
+last_reviewedd <- data3 %>% arrange(desc(last_review)) %>% head(n = 1)
+last_reviewed <- last_reviewedd$last_review
+
+#How many of the listings are private rooms?
+data2 <- data2 %>% mutate(type_lower = str_to_lower(room_type))
+nb_private_rooms <- data2 %>% filter(type_lower == "private room") %>% nrow()
+
+#What is the average listing price for all rooms (rounded to the nearest penny)?
+data1$price <- as.numeric(gsub(' dollars', '', data1$price))
+avg_price <- round(mean(data1$price), 2)
+review_dates <- tibble(first_reviewed, last_reviewed, nb_private_rooms, avg_price)
+
